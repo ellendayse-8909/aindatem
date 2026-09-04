@@ -143,6 +143,27 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .buybar{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--linha);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px;z-index:48}
 .buybar .p .de{font-size:11.5px;color:var(--cinza-cl);text-decoration:line-through;display:block;line-height:1}
 .buybar .p .por{font-size:21px;font-weight:800;color:var(--verde-esc)}
+/* ---- carrinho ---- */
+.cart-badge{position:absolute;top:-5px;right:-5px;background:var(--dourado);color:#3a2600;font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 3px;border:2px solid var(--verde)}
+.cartbar{position:absolute;left:12px;right:12px;bottom:74px;background:var(--verde);color:#fff;border-radius:14px;padding:12px 15px;display:flex;align-items:center;gap:11px;z-index:44;box-shadow:0 8px 24px rgba(18,161,80,.42);cursor:pointer}
+.cartbar .n{background:#fff;color:var(--verde-esc);font-weight:800;min-width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px}
+.cartbar .lbl{font-weight:700;font-size:14px}
+.cartbar .tot{margin-left:auto;font-weight:800;font-size:16px}
+.cart-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--linha);align-items:center}
+.cart-item .th{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;font-size:26px;color:#fff;flex-shrink:0}
+.cart-item .info{flex:1;min-width:0}
+.cart-item .nm{font-weight:700;font-size:14.5px}
+.cart-item .sb{font-size:12px;color:var(--cinza);margin-top:2px}
+.cart-item .por{color:var(--verde-esc);font-weight:800;margin-top:4px}
+.stepper{display:flex;align-items:center;gap:9px;margin-top:4px}
+.stepper button{width:30px;height:30px;border-radius:9px;background:var(--verde-wash);color:var(--verde-esc);font-size:18px;font-weight:800;display:grid;place-items:center;line-height:1}
+.stepper .q{font-weight:800;min-width:18px;text-align:center}
+.cart-remove{background:none;color:var(--cinza-cl);font-size:12px;text-decoration:underline;padding:0;margin-left:6px}
+.cart-total{display:flex;justify-content:space-between;align-items:center;padding:18px 0 8px;font-size:15px}
+.cart-total .v{font-weight:800;font-size:23px;color:var(--verde-esc)}
+.d-back-row{display:flex;align-items:center;gap:10px;padding:14px 16px 4px}
+.d-back-row button{width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid var(--linha);font-size:17px}
+.d-back-row h2{font-size:19px}
 
 /* ---------- botões / modais ---------- */
 .btn{display:block;width:100%;background:var(--verde);color:#fff;padding:15px;border-radius:12px;font-weight:800;font-size:16px;text-align:center;box-shadow:0 4px 14px rgba(18,161,80,.32)}
@@ -221,6 +242,7 @@ input,select,textarea{font-family:inherit;font-size:15px}
         </div>
       </div>
       <div class="icons">
+        <button class="ic-btn" id="cartBtn" onclick="go('carrinho')" style="position:relative">🛒<span class="cart-badge" id="cartBadge" hidden>0</span></button>
         <button class="role-chip" onclick="openRoles()">👤 <span id="roleLabel">Cliente</span> ▾</button>
       </div>
     </div>
@@ -231,6 +253,9 @@ input,select,textarea{font-family:inherit;font-size:15px}
   </div>
   <!-- CONTEÚDO -->
   <div class="scroll" id="scroll"></div>
+  <div class="cartbar" id="cartBar" hidden onclick="go('carrinho')">
+    <span class="n" id="cartBarN">0</span><span class="lbl">Ver minha sacola</span><span class="tot" id="cartBarTot">R$ 0,00</span>
+  </div>
   <!-- BOTTOM NAV -->
   <div class="nav" id="nav">
     <button data-tab="inicio" class="on" onclick="go('inicio')"><span class="ic">🏠</span>Início</button>
@@ -301,7 +326,7 @@ let bags=[
 ];
 let estabs=[{id:"e1",nome:"Padaria Pão Nosso",cat:"padaria",bairro:"Renascença",vendas:142,rate:4.8}];
 let orders=[];
-let state={role:"cliente",tab:"inicio",user:null,filterCat:"todas",q:"",currentBag:null,merchantTab:"ativas",adminTab:"resumo"};
+let state={role:"cliente",tab:"inicio",user:null,filterCat:"todas",q:"",currentBag:null,cart:[],merchantTab:"ativas",adminTab:"resumo"};
 
 /* ===== HELPERS ===== */
 const $=s=>document.querySelector(s);
@@ -319,7 +344,7 @@ function fakeQR(){let s='<div style="display:grid;grid-template-columns:repeat(1
 
 /* ===== ROLES / NAV ===== */
 function openRoles(){openOv("#ovRole");}
-function setRole(r){state.role=r;closeOv("#ovRole");$("#roleLabel").textContent=r==="cliente"?"Cliente":r==="estab"?"Loja":"Admin";const cli=r==="cliente";$("#nav").style.display=cli?"flex":"none";$("#searchBox").style.display=cli?"flex":"none";$("#hdrSub").style.display=cli?"block":"none";state.tab=cli?"inicio":r==="estab"?"merchant":"admin";render();}
+function setRole(r){state.role=r;closeOv("#ovRole");$("#roleLabel").textContent=r==="cliente"?"Cliente":r==="estab"?"Loja":"Admin";const cli=r==="cliente";$("#nav").style.display=cli?"flex":"none";$("#searchBox").style.display=cli?"flex":"none";$("#hdrSub").style.display=cli?"block":"none";$("#cartBtn").style.display=cli?"grid":"none";state.tab=cli?"inicio":r==="estab"?"merchant":"admin";render();}
 function go(tab){state.tab=tab;document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));render();}
 function focusSearch(){go('busca');setTimeout(()=>{const el=$("#q2");if(el)el.focus();},60);}
 
@@ -327,11 +352,14 @@ function focusSearch(){go('busca');setTimeout(()=>{const el=$("#q2");if(el)el.fo
 function render(){
   scroll.scrollTop=0;
   if(state.role==="cliente"){
-    if(state.tab==="inicio")return renderInicio();
-    if(state.tab==="busca")return renderBusca();
-    if(state.tab==="detail")return renderDetail();
-    if(state.tab==="pedidos")return renderPedidos();
-    if(state.tab==="perfil")return renderPerfil();
+    if(state.tab==="inicio")renderInicio();
+    else if(state.tab==="busca")renderBusca();
+    else if(state.tab==="detail")renderDetail();
+    else if(state.tab==="carrinho")renderCarrinho();
+    else if(state.tab==="pedidos")renderPedidos();
+    else if(state.tab==="perfil")renderPerfil();
+    updateCartCount();updateCartBar();
+    return;
   }
   if(state.role==="estab")return renderMerchant();
   if(state.role==="admin")return renderAdmin();
@@ -414,7 +442,7 @@ function renderDetail(){const b=state.currentBag,c=catOf(b.cat);
       <div class="d-chips"><span class="d-chip">🕒 Retira ${b.ini}–${b.fim}</span><span class="d-chip">🏷️ ${off(b)}% off</span><span class="d-chip">🛍️ Restam ${b.qt}</span></div>
     </div>
     <div class="d-sec-t">Sacola surpresa</div>
-    <div class="item" onclick="reservar()">
+    <div class="item" onclick="addToCart('${b.id}')">
       <div class="txt"><h4>Sacola Surpresa — ${c.n}</h4><p>${b.desc}</p>
         <div class="pr"><span class="por">${money(b.por)}</span><span class="de">${money(b.de)}</span></div></div>
       <div class="pic" style="background:${grad(c.c)}"><div class="disc">-${off(b)}%</div>${foodEmoji[b.cat]||c.e}</div>
@@ -422,13 +450,13 @@ function renderDetail(){const b=state.currentBag,c=catOf(b.cat);
     <div class="d-info-box"><b>🎁 O que vem na sacola?</b>É surpresa! O ${b.estab} monta com o que sobrou de melhor do dia — sempre fresco e dentro da validade, valendo bem mais do que você paga.</div>
     <div class="d-info-box" style="background:var(--verde-wash);color:var(--verde-esc)"><b>♻️ Seu impacto</b>Ao salvar essa sacola você evita ~1,2 kg de CO₂ e ajuda um comércio de São Luís.</div>
     <div style="height:90px"></div>
-    <div class="buybar"><div class="p"><span class="de">${money(b.de)}</span><span class="por">${money(b.por)}</span></div><button class="btn flex" onclick="reservar()">Reservar sacola 🛍️</button></div>
+    <div class="buybar"><div class="p"><span class="de">${money(b.de)}</span><span class="por">${money(b.por)}</span></div><button class="btn flex" onclick="addToCart('${b.id}')">Adicionar à sacola 🛒</button></div>
   `;
 }
 
 /* ===== RESERVA + PIX ===== */
 function reservar(){if(!state.user)openOv("#ovLogin");else startPix();}
-function doLogin(){const n=$("#inName").value.trim(),p=$("#inPhone").value.trim();if(!n||!p){toast("Preencha nome e WhatsApp");return;}state.user={nome:n,tel:p};closeOv("#ovLogin");startPix();}
+function doLogin(){const n=$("#inName").value.trim(),p=$("#inPhone").value.trim();if(!n||!p){toast("Preencha nome e WhatsApp");return;}state.user={nome:n,tel:p};closeOv("#ovLogin");finalizarCompra();}
 let pixTimer=null;
 function startPix(){const b=state.currentBag,code=genCode();openOv("#ovPix");
   $("#pixModal").innerHTML=`<div class="handle"></div><h2>Pague com PIX</h2><p class="sub">${b.estab} · sacola surpresa</p>
@@ -450,6 +478,53 @@ function confirmarPedido(code){if(pixTimer)clearInterval(pixTimer);const b=state
   toast("Você salvou uma refeição! 🌱");
 }
 function updateBadge(){const nav=document.querySelector('#nav button[data-tab="pedidos"]');if(!nav)return;let b=nav.querySelector('.n-badge');if(orders.length){if(!b){b=document.createElement('span');b.className='n-badge';nav.appendChild(b);}b.textContent=orders.length;}else if(b)b.remove();}
+
+/* ===== CARRINHO ===== */
+function cartCount(){return state.cart.reduce((s,i)=>s+i.qt,0);}
+function cartTotal(){return state.cart.reduce((s,i)=>s+i.qt*i.bag.por,0);}
+function updateCartCount(){const n=cartCount(),el=$("#cartBadge");if(el){el.textContent=n;el.hidden=n<=0;}}
+function updateCartBar(){const bar=$("#cartBar");if(!bar)return;const show=state.role==="cliente"&&cartCount()>0&&(state.tab==="inicio"||state.tab==="busca");bar.hidden=!show;if(show){$("#cartBarN").textContent=cartCount();$("#cartBarTot").textContent=money(cartTotal());}}
+function addToCart(id){const b=bags.find(x=>x.id===id);if(!b)return;if(b.qt<=0){toast("Essa sacola esgotou 😢");return;}const it=state.cart.find(i=>i.bag.id===id);const jaNoCarrinho=it?it.qt:0;if(jaNoCarrinho>=b.qt){toast("Você já tem todas as sacolas disponíveis 🙂");return;}if(it)it.qt++;else state.cart.push({bag:b,qt:1});toast("Adicionado à sacola! 🛒");updateCartCount();updateCartBar();}
+function changeQty(id,d){const it=state.cart.find(i=>i.bag.id===id);if(!it)return;const b=bags.find(x=>x.id===id);it.qt+=d;if(it.qt<=0){state.cart=state.cart.filter(i=>i.bag.id!==id);}else if(b&&it.qt>b.qt){it.qt=b.qt;toast("Só há "+b.qt+" disponível(is)");}renderCarrinho();updateCartCount();}
+function removeFromCart(id){state.cart=state.cart.filter(i=>i.bag.id!==id);renderCarrinho();updateCartCount();}
+function renderCarrinho(){
+  if(!state.cart.length){scroll.innerHTML=`<div class="d-back-row"><button onclick="go('inicio')">←</button><h2>Minha sacola</h2></div><div class="empty"><div class="e">🛒</div><h3>Sua sacola está vazia</h3><p>Adicione sacolas surpresa e finalize tudo de uma vez.</p><button class="btn" style="max-width:220px;margin:16px auto 0" onclick="go('inicio')">Descobrir sacolas</button></div>`;return;}
+  scroll.innerHTML=`<div class="d-back-row"><button onclick="go('inicio')">←</button><h2>Minha sacola</h2></div>
+    <div style="padding:2px 16px 8px">
+      ${state.cart.map(i=>{const b=i.bag,c=catOf(b.cat);return `<div class="cart-item">
+        <div class="th" style="background:${grad(c.c)}">${foodEmoji[b.cat]||c.e}</div>
+        <div class="info"><div class="nm">${b.estab}</div><div class="sb">${c.n} · ${b.bairro} · 🕒 ${b.ini}–${b.fim}</div>
+          <div class="por">${money(b.por)}</div>
+          <div class="stepper"><button onclick="changeQty('${b.id}',-1)">−</button><span class="q">${i.qt}</span><button onclick="changeQty('${b.id}',1)">+</button><button class="cart-remove" onclick="removeFromCart('${b.id}')">remover</button></div>
+        </div></div>`;}).join("")}
+      <div class="cart-total"><span>Total</span><span class="v">${money(cartTotal())}</span></div>
+      <div class="d-info-box" style="background:var(--verde-wash);color:var(--verde-esc)">♻️ Você vai salvar <b>${cartCount()} refeição(ões)</b> do desperdício. Cada loja tem seu próprio código de retirada.</div>
+      <button class="btn" style="margin-top:12px" onclick="finalizarCompra()">Finalizar compra · ${money(cartTotal())}</button>
+    </div>`;
+}
+function finalizarCompra(){if(!state.cart.length){toast("Sua sacola está vazia");return;}if(!state.user){openOv("#ovLogin");return;}startPixCart();}
+function startPixCart(){const tot=cartTotal();openOv("#ovPix");
+  $("#pixModal").innerHTML=`<div class="handle"></div><h2>Pague com PIX</h2><p class="sub">${cartCount()} sacola(s) · ${state.cart.length} loja(s)</p>
+    <div class="pix-qr" id="qrBox">${fakeQR()}</div>
+    <div style="text-align:center;font-size:24px;font-weight:800;color:var(--verde-esc)">${money(tot)}</div>
+    <div class="pix-code">00020126...BR.GOV.BCB.PIX...5204000053039865802BR6009SAOLUIS...</div>
+    <div class="pix-status" id="pixStatus"><span class="spin"></span> Aguardando pagamento...</div>
+    <p style="text-align:center;font-size:12px;color:var(--cinza)">Escaneie no app do banco. Confirmação automática (Woovi).</p>
+    <button class="btn" style="margin-top:12px" onclick="simulaPagamentoCart()">✅ Simular pagamento (demo)</button>
+    <button class="btn sec" style="margin-top:8px" onclick="cancelPix()">Cancelar</button>`;
+  if(WOOVI_SANDBOX_APPID!=='SEU_APP_ID_SANDBOX_AQUI')criarCobrancaWooviCart(tot);
+}
+async function criarCobrancaWooviCart(tot){try{const res=await fetch('https://api.woovi-sandbox.com/api/v1/charge',{method:'POST',headers:{'Authorization':WOOVI_SANDBOX_APPID,'Content-Type':'application/json'},body:JSON.stringify({correlationID:'aindatem-'+Date.now(),value:Math.round(tot*100),comment:'AINDA TEM — '+cartCount()+' sacola(s)'})});const d=await res.json();const ch=d.charge||{};if(ch.brCode)$("#pixModal .pix-code").textContent=ch.brCode;if(ch.qrCodeImage)$("#qrBox").innerHTML=`<img src="${ch.qrCodeImage}" style="width:100%;height:100%">`;pixTimer=setInterval(async()=>{try{const r=await fetch('https://api.woovi-sandbox.com/api/v1/charge/'+ch.correlationID,{headers:{'Authorization':WOOVI_SANDBOX_APPID}});const dd=await r.json();if(dd.charge&&dd.charge.status==='COMPLETED'){clearInterval(pixTimer);confirmarCompra();}}catch(e){}},5000);}catch(e){}}
+function simulaPagamentoCart(){const s=$("#pixStatus");if(s){s.innerHTML='✅ Pagamento confirmado!';s.style.color='var(--verde)';}setTimeout(confirmarCompra,700);}
+function confirmarCompra(){if(pixTimer)clearInterval(pixTimer);const novos=[];
+  state.cart.forEach(i=>{const b=i.bag;for(let k=0;k<i.qt&&b.qt>0;k++){const code=genCode();const ordem={id:"o"+Date.now()+"_"+Math.random().toString(36).slice(2,6),bag:{...b},code,status:"pago",user:state.user,data:new Date()};orders.unshift(ordem);novos.push(ordem);b.qt=Math.max(0,b.qt-1);const e=estabs.find(x=>x.nome===b.estab);if(e)e.vendas++;}});
+  state.cart=[];updateCartCount();updateCartBar();updateBadge();closeOv("#ovPix");openOv("#ovForm");
+  const porLoja={};novos.forEach(o=>{(porLoja[o.bag.estab]=porLoja[o.bag.estab]||{bag:o.bag,codes:[]}).codes.push(o.code);});
+  $("#formModal").innerHTML=`<div class="handle"></div><div class="pickup"><div class="check">✓</div><h2>Compra confirmada! 🎉</h2><p class="sub">Mostre o código de cada loja na retirada</p></div>
+    <div style="margin-top:6px">${Object.values(porLoja).map(g=>`<div class="d-info-box" style="text-align:left;background:var(--verde-wash);color:var(--verde-esc)"><b>${g.bag.estab}</b>Código: <span style="font-size:22px;font-weight:800;letter-spacing:3px">${g.codes.join(" · ")}</span><br>🕒 Retire hoje ${g.bag.ini}–${g.bag.fim} · 📍 ${g.bag.bairro}</div>`).join("")}</div>
+    <button class="btn" style="margin-top:6px" onclick="closeOv('#ovForm');go('pedidos')">Ver meus pedidos</button>`;
+  toast("Você salvou "+novos.length+" refeição(ões)! 🌱");
+}
 
 /* ===== PEDIDOS ===== */
 function renderPedidos(){
