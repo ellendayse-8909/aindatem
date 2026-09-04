@@ -158,7 +158,8 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .stepper{display:flex;align-items:center;gap:9px;margin-top:4px}
 .stepper button{width:30px;height:30px;border-radius:9px;background:var(--verde-wash);color:var(--verde-esc);font-size:18px;font-weight:800;display:grid;place-items:center;line-height:1}
 .stepper .q{font-weight:800;min-width:18px;text-align:center}
-.cart-remove{background:none;color:var(--cinza-cl);font-size:12px;text-decoration:underline;padding:0;margin-left:6px}
+.cart-remove{background:none;color:var(--cinza);font-size:19px;line-height:1;padding:6px;margin-left:auto;border-radius:9px}
+.cart-remove:hover{background:var(--verde-wash)}
 .cart-total{display:flex;justify-content:space-between;align-items:center;padding:18px 0 8px;font-size:15px}
 .cart-total .v{font-weight:800;font-size:23px;color:var(--verde-esc)}
 .d-back-row{display:flex;align-items:center;gap:10px;padding:14px 16px 4px}
@@ -495,7 +496,7 @@ function renderCarrinho(){
         <div class="th" style="background:${grad(c.c)}">${foodEmoji[b.cat]||c.e}</div>
         <div class="info"><div class="nm">${b.estab}</div><div class="sb">${c.n} · ${b.bairro} · 🕒 ${b.ini}–${b.fim}</div>
           <div class="por">${money(b.por)}</div>
-          <div class="stepper"><button onclick="changeQty('${b.id}',-1)">−</button><span class="q">${i.qt}</span><button onclick="changeQty('${b.id}',1)">+</button><button class="cart-remove" onclick="removeFromCart('${b.id}')">remover</button></div>
+          <div class="stepper"><button onclick="changeQty('${b.id}',-1)">−</button><span class="q">${i.qt}</span><button onclick="changeQty('${b.id}',1)">+</button><button class="cart-remove" onclick="removeFromCart('${b.id}')" aria-label="Remover">🗑️</button></div>
         </div></div>`;}).join("")}
       <div class="cart-total"><span>Total</span><span class="v">${money(cartTotal())}</span></div>
       <div class="d-info-box" style="background:var(--verde-wash);color:var(--verde-esc)">♻️ Você vai salvar <b>${cartCount()} refeição(ões)</b> do desperdício. Cada loja tem seu próprio código de retirada.</div>
