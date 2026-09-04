@@ -165,6 +165,17 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .d-back-row{display:flex;align-items:center;gap:10px;padding:14px 16px 4px}
 .d-back-row button{width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid var(--linha);font-size:17px}
 .d-back-row h2{font-size:19px}
+/* ---- formas de pagamento ---- */
+.pay-group{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--cinza);margin:14px 2px 6px}
+.pay-opt{display:flex;align-items:center;gap:13px;padding:13px 14px;border:1.5px solid var(--linha);border-radius:12px;margin-bottom:9px;cursor:pointer;background:#fff}
+.pay-opt:active{background:var(--verde-wash)}
+.pay-opt .pic{width:40px;height:40px;border-radius:10px;background:var(--verde-wash);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.pay-opt .tx{flex:1;min-width:0}
+.pay-opt .tx b{font-size:14.5px;display:block}
+.pay-opt .tx small{font-size:11.5px;color:var(--cinza)}
+.pay-opt .tag{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;background:var(--verde);color:#fff}
+.pay-opt .tag.soft{background:var(--dourado-wash);color:var(--dourado-esc)}
+.pay-opt .chev{color:var(--cinza-cl);font-size:16px}
 
 /* ---------- botões / modais ---------- */
 .btn{display:block;width:100%;background:var(--verde);color:#fff;padding:15px;border-radius:12px;font-weight:800;font-size:16px;text-align:center;box-shadow:0 4px 14px rgba(18,161,80,.32)}
@@ -227,7 +238,7 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:var(--tinta);color:#fff;padding:12px 18px;border-radius:24px;font-size:13.5px;font-weight:600;z-index:200;opacity:0;transition:.3s;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:88%;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(-6px)}
 .note{background:var(--dourado-wash);border-radius:10px;padding:10px 12px;font-size:12px;margin:12px 16px 0;color:#7a5c00}
-.hidden{display:none!important}
+.hidden,[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -327,7 +338,7 @@ let bags=[
 ];
 let estabs=[{id:"e1",nome:"Padaria Pão Nosso",cat:"padaria",bairro:"Renascença",vendas:142,rate:4.8}];
 let orders=[];
-let state={role:"cliente",tab:"inicio",user:null,filterCat:"todas",q:"",currentBag:null,cart:[],merchantTab:"ativas",adminTab:"resumo"};
+let state={role:"cliente",tab:"inicio",user:null,filterCat:"todas",q:"",currentBag:null,cart:[],pagamento:null,merchantTab:"ativas",adminTab:"resumo"};
 
 /* ===== HELPERS ===== */
 const $=s=>document.querySelector(s);
@@ -484,7 +495,7 @@ function updateBadge(){const nav=document.querySelector('#nav button[data-tab="p
 function cartCount(){return state.cart.reduce((s,i)=>s+i.qt,0);}
 function cartTotal(){return state.cart.reduce((s,i)=>s+i.qt*i.bag.por,0);}
 function updateCartCount(){const n=cartCount(),el=$("#cartBadge");if(el){el.textContent=n;el.hidden=n<=0;}}
-function updateCartBar(){const bar=$("#cartBar");if(!bar)return;const show=state.role==="cliente"&&cartCount()>0&&(state.tab==="inicio"||state.tab==="busca");bar.hidden=!show;if(show){$("#cartBarN").textContent=cartCount();$("#cartBarTot").textContent=money(cartTotal());}}
+function updateCartBar(){const bar=$("#cartBar");if(!bar)return;$("#cartBarN").textContent=cartCount();$("#cartBarTot").textContent=money(cartTotal());const show=state.role==="cliente"&&cartCount()>0&&(state.tab==="inicio"||state.tab==="busca"||state.tab==="detail");bar.hidden=!show;}
 function addToCart(id){const b=bags.find(x=>x.id===id);if(!b)return;if(b.qt<=0){toast("Essa sacola esgotou 😢");return;}const it=state.cart.find(i=>i.bag.id===id);const jaNoCarrinho=it?it.qt:0;if(jaNoCarrinho>=b.qt){toast("Você já tem todas as sacolas disponíveis 🙂");return;}if(it)it.qt++;else state.cart.push({bag:b,qt:1});toast("Adicionado à sacola! 🛒");updateCartCount();updateCartBar();}
 function changeQty(id,d){const it=state.cart.find(i=>i.bag.id===id);if(!it)return;const b=bags.find(x=>x.id===id);it.qt+=d;if(it.qt<=0){state.cart=state.cart.filter(i=>i.bag.id!==id);}else if(b&&it.qt>b.qt){it.qt=b.qt;toast("Só há "+b.qt+" disponível(is)");}renderCarrinho();updateCartCount();}
 function removeFromCart(id){state.cart=state.cart.filter(i=>i.bag.id!==id);renderCarrinho();updateCartCount();}
@@ -503,7 +514,37 @@ function renderCarrinho(){
       <button class="btn" style="margin-top:12px" onclick="finalizarCompra()">Finalizar compra · ${money(cartTotal())}</button>
     </div>`;
 }
-function finalizarCompra(){if(!state.cart.length){toast("Sua sacola está vazia");return;}if(!state.user){openOv("#ovLogin");return;}startPixCart();}
+function finalizarCompra(){if(!state.cart.length){toast("Sua sacola está vazia");return;}if(!state.user){openOv("#ovLogin");return;}abrirPagamento();}
+const PAGAMENTOS={
+  pix:{nome:"Pix",desc:"Aprovação na hora",ic:"⚡",tag:"Recomendado"},
+  credito:{nome:"Cartão de crédito",desc:"Visa, Master, Elo, Amex, Hipercard",ic:"💳"},
+  debito:{nome:"Cartão de débito",desc:"Visa, Master, Elo",ic:"💳"},
+  vale:{nome:"Vale-refeição",desc:"Alelo, VR, Ticket, Sodexo/Pluxee, Ben",ic:"🍽️"},
+  carteira:{nome:"Carteira digital",desc:"Google Pay · Apple Pay",ic:"📱"},
+  dinheiro:{nome:"Dinheiro na retirada",desc:"Pague na loja ao buscar",ic:"💵"},
+  maquina:{nome:"Maquininha na retirada",desc:"Crédito ou débito na loja",ic:"🏧"},
+};
+function abrirPagamento(){
+  openOv("#ovForm");
+  const row=(k,online)=>{const m=PAGAMENTOS[k];return `<div class="pay-opt" onclick="escolherPagamento('${k}')"><div class="pic">${m.ic}</div><div class="tx"><b>${m.nome}</b><small>${m.desc}</small></div>${m.tag?`<span class="tag">${m.tag}</span>`:(online?'<span class="tag soft">demo</span>':'')}<span class="chev">›</span></div>`;};
+  $("#formModal").innerHTML=`<div class="handle"></div>
+    <h2>Forma de pagamento</h2><p class="sub">Total ${money(cartTotal())} · ${cartCount()} sacola(s)</p>
+    <div class="pay-group">Pague pelo app</div>
+    ${row('pix',true)}${row('credito',true)}${row('debito',true)}${row('vale',true)}${row('carteira',true)}
+    <div class="pay-group">Pague na retirada</div>
+    ${row('dinheiro',false)}${row('maquina',false)}
+    <p style="font-size:11.5px;color:var(--cinza);margin-top:10px;text-align:center">🔒 No momento o Pix já processa de verdade. Cartão e vale entram ao conectar o meio de pagamento.</p>`;
+}
+function escolherPagamento(k){state.pagamento=k;closeOv("#ovForm");
+  if(k==='pix'){startPixCart();return;}
+  if(k==='dinheiro'||k==='maquina'){confirmarCompra();return;}
+  pagamentoSimulado(k);
+}
+function pagamentoSimulado(k){const m=PAGAMENTOS[k];openOv("#ovPix");
+  $("#pixModal").innerHTML=`<div class="handle"></div><h2>${m.nome}</h2><p class="sub">Total ${money(cartTotal())}</p>
+    <div style="text-align:center;padding:24px 0"><div class="spin" style="width:34px;height:34px;margin:0 auto 14px;border-width:4px"></div><div style="font-weight:700;color:var(--dourado-esc)">Processando pagamento...</div><p style="font-size:12px;color:var(--cinza);margin-top:8px">Demonstração — cartão/vale entram com o gateway de pagamento.</p></div>`;
+  setTimeout(()=>{closeOv("#ovPix");confirmarCompra();},1400);
+}
 function startPixCart(){const tot=cartTotal();openOv("#ovPix");
   $("#pixModal").innerHTML=`<div class="handle"></div><h2>Pague com PIX</h2><p class="sub">${cartCount()} sacola(s) · ${state.cart.length} loja(s)</p>
     <div class="pix-qr" id="qrBox">${fakeQR()}</div>
@@ -521,7 +562,7 @@ function confirmarCompra(){if(pixTimer)clearInterval(pixTimer);const novos=[];
   state.cart.forEach(i=>{const b=i.bag;for(let k=0;k<i.qt&&b.qt>0;k++){const code=genCode();const ordem={id:"o"+Date.now()+"_"+Math.random().toString(36).slice(2,6),bag:{...b},code,status:"pago",user:state.user,data:new Date()};orders.unshift(ordem);novos.push(ordem);b.qt=Math.max(0,b.qt-1);const e=estabs.find(x=>x.nome===b.estab);if(e)e.vendas++;}});
   state.cart=[];updateCartCount();updateCartBar();updateBadge();closeOv("#ovPix");openOv("#ovForm");
   const porLoja={};novos.forEach(o=>{(porLoja[o.bag.estab]=porLoja[o.bag.estab]||{bag:o.bag,codes:[]}).codes.push(o.code);});
-  $("#formModal").innerHTML=`<div class="handle"></div><div class="pickup"><div class="check">✓</div><h2>Compra confirmada! 🎉</h2><p class="sub">Mostre o código de cada loja na retirada</p></div>
+  $("#formModal").innerHTML=`<div class="handle"></div><div class="pickup"><div class="check">✓</div><h2>Compra confirmada! 🎉</h2><p class="sub">Mostre o código de cada loja na retirada</p><p style="font-size:12.5px;color:var(--verde-esc);font-weight:700;margin-top:4px">${(state.pagamento==='dinheiro'||state.pagamento==='maquina')?'💵 Pagar na retirada':'✅ Pago'} · ${(PAGAMENTOS[state.pagamento]||PAGAMENTOS.pix).nome}</p></div>
     <div style="margin-top:6px">${Object.values(porLoja).map(g=>`<div class="d-info-box" style="text-align:left;background:var(--verde-wash);color:var(--verde-esc)"><b>${g.bag.estab}</b>Código: <span style="font-size:22px;font-weight:800;letter-spacing:3px">${g.codes.join(" · ")}</span><br>🕒 Retire hoje ${g.bag.ini}–${g.bag.fim} · 📍 ${g.bag.bairro}</div>`).join("")}</div>
     <button class="btn" style="margin-top:6px" onclick="closeOv('#ovForm');go('pedidos')">Ver meus pedidos</button>`;
   toast("Você salvou "+novos.length+" refeição(ões)! 🌱");
